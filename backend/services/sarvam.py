@@ -130,13 +130,11 @@ print("✅ Chunking helpers ready")
 
 def create_sarvam_chunks(data_type, data):
     
-    # Mindcase normally returns a list
+  
     if not isinstance(data, list):
         data = [data]
 
-    # -----------------------------
-    # COMPANY EMPLOYEES
-    # -----------------------------
+   
     if data_type == "company_employees":
 
         return split_list_by_tokens(
@@ -144,9 +142,7 @@ def create_sarvam_chunks(data_type, data):
             max_tokens=2500
         )
 
-    # -----------------------------
-    # COMPANY
-    # -----------------------------
+
     if data_type == "company":
 
         return split_list_by_tokens(
@@ -154,9 +150,7 @@ def create_sarvam_chunks(data_type, data):
             max_tokens=2500
         )
 
-    # -----------------------------
-    # PERSON
-    # -----------------------------
+   
     if data_type == "person":
 
         chunks = []
@@ -168,14 +162,14 @@ def create_sarvam_chunks(data_type, data):
                 ensure_ascii=False
             )
 
-            # Normal-sized profile
+            
             if estimate_tokens(person_text) <= 2500:
 
                 chunks.append([person])
 
                 continue
 
-            # Large profile → split logically
+            
             basic = {}
             employment = {}
             other = {}
@@ -184,7 +178,7 @@ def create_sarvam_chunks(data_type, data):
 
                 key_lower = key.lower()
 
-                # Employment-related fields
+                
                 if any(
                     word in key_lower
                     for word in [
@@ -197,7 +191,7 @@ def create_sarvam_chunks(data_type, data):
 
                     employment[key] = value
 
-                # Education / skills
+               
                 elif any(
                     word in key_lower
                     for word in [
@@ -210,7 +204,7 @@ def create_sarvam_chunks(data_type, data):
 
                     other[key] = value
 
-                # Everything else
+                
                 else:
 
                     basic[key] = value
@@ -234,9 +228,7 @@ def create_sarvam_chunks(data_type, data):
 
         return chunks
 
-    # -----------------------------
-    # FALLBACK
-    # -----------------------------
+   
     return split_list_by_tokens(
         data,
         max_tokens=2500
@@ -248,9 +240,7 @@ print("✅ Sarvam logical chunking ready")
 
 def merge_sarvam_results(data_type, results):
     
-    # =============================
-    # PERSON
-    # =============================
+   
     if data_type == "person":
 
         merged = {
@@ -275,7 +265,7 @@ def merge_sarvam_results(data_type, results):
             if not isinstance(result, dict):
                 continue
 
-            # Basic fields
+           
             for key in [
                 "full_name",
                 "linkedin_url",
@@ -286,7 +276,7 @@ def merge_sarvam_results(data_type, results):
                 if not merged[key] and result.get(key):
                     merged[key] = result[key]
 
-            # Location
+          
             location = result.get("location")
 
             if isinstance(location, dict):
@@ -303,7 +293,7 @@ def merge_sarvam_results(data_type, results):
                     ):
                         merged["location"][key] = location[key]
 
-            # List fields
+            
             for key in [
                 "current_positions",
                 "historical_positions",
@@ -317,7 +307,7 @@ def merge_sarvam_results(data_type, results):
                 if isinstance(values, list):
                     merged[key].extend(values)
 
-        # Remove duplicates
+        
         for key in [
             "current_positions",
             "historical_positions",
@@ -346,9 +336,7 @@ def merge_sarvam_results(data_type, results):
 
         return merged
 
-    # =============================
-    # COMPANY
-    # =============================
+
     if data_type == "company":
 
         merged = {
@@ -377,9 +365,7 @@ def merge_sarvam_results(data_type, results):
 
         return merged
 
-    # =============================
-    # COMPANY EMPLOYEES
-    # =============================
+
     if data_type == "company_employees":
 
         employees = []
@@ -394,7 +380,7 @@ def merge_sarvam_results(data_type, results):
             if isinstance(values, list):
                 employees.extend(values)
 
-        # Deduplicate
+       
         unique = []
         seen = set()
 
@@ -530,17 +516,17 @@ IMPORTANT:
                 e
             )
 
-    # Nothing succeeded
+   
     if not chunk_results:
 
         return None
 
-    # Only one chunk
+   
     if len(chunk_results) == 1:
 
         return chunk_results[0]
 
-    # Multiple chunks
+    
     print(
         f"🔗 Merging {len(chunk_results)} chunks..."
     )
