@@ -24,9 +24,6 @@ MINDSCASE_HEADERS = {
 }
 
 
-# ============================================================
-# PROFILE
-# ============================================================
 
 def start_profile_job(linkedin_url):
 
@@ -53,9 +50,7 @@ def start_profile_job(linkedin_url):
     return response.json()
 
 
-# ============================================================
-# COMPANY
-# ============================================================
+
 
 def start_company_job(linkedin_url):
 
@@ -82,9 +77,6 @@ def start_company_job(linkedin_url):
     return response.json()
 
 
-# ============================================================
-# COMPANY EMPLOYEES
-# ============================================================
 
 def start_company_employees_job(company_url):
 
@@ -120,9 +112,7 @@ def start_company_employees_job(company_url):
     return response.json()
 
 
-# ============================================================
-# POLL JOB
-# ============================================================
+
 
 def poll_mindcase_job(job_id, is_cancelled=None):
 
@@ -133,9 +123,7 @@ def poll_mindcase_job(job_id, is_cancelled=None):
 
     while True:
 
-        # ====================================================
-        # CHECK CANCELLATION BEFORE POLLING
-        # ====================================================
+ 
 
         if is_cancelled and is_cancelled():
 
@@ -171,27 +159,20 @@ def poll_mindcase_job(job_id, is_cancelled=None):
         )
 
 
-        # ====================================================
-        # COMPLETED
-        # ====================================================
+  
 
         if status == "completed":
 
             return result
 
 
-        # ====================================================
-        # MINDCASE FAILED / CANCELLED
-        # ====================================================
-
+   
         if status in ["failed", "cancelled"]:
 
             return result
 
 
-        # ====================================================
-        # CHECK CANCELLATION BEFORE WAITING
-        # ====================================================
+    
 
         if is_cancelled and is_cancelled():
 
