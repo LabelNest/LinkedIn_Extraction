@@ -24,16 +24,12 @@ from services.database import (
 )
 
 
-# ============================================================
-# LOAD ENVIRONMENT VARIABLES
-# ============================================================
+
 
 load_dotenv()
 
 
-# ============================================================
-# FASTAPI APP
-# ============================================================
+
 
 app = FastAPI(
     title="LabelNest LinkedIn Enrichment API",
@@ -41,9 +37,7 @@ app = FastAPI(
 )
 
 
-# ============================================================
-# CORS
-# ============================================================
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,21 +48,16 @@ app.add_middleware(
 )
 
 
-# ============================================================
-# REQUEST MODEL
-# ============================================================
+
 
 class EnrichRequest(BaseModel):
     urls: List[str]
 
-    # Frontend will send the request ID that it received
-    # from /api/enrich/start
+
     request_id: Optional[str] = None
 
 
-# ============================================================
-# CANCELLATION STATE
-# ============================================================
+
 
 active_cancellations = {}
 
@@ -111,9 +100,6 @@ def is_request_cancelled(request_id: str) -> bool:
     return event.is_set()
 
 
-# ============================================================
-# HEALTH CHECK
-# ============================================================
 
 @app.get("/")
 def root():
@@ -124,13 +110,7 @@ def root():
     }
 
 
-# ============================================================
-# START ENRICHMENT
-#
-# IMPORTANT:
-# This endpoint creates the request ID BEFORE the long
-# enrichment process starts.
-# ============================================================
+
 
 @app.post("/api/enrich/start")
 def start_enrichment():
@@ -167,9 +147,7 @@ def start_enrichment():
     }
 
 
-# ============================================================
-# STOP ENRICHMENT
-# ============================================================
+
 
 @app.post("/api/enrich/stop/{request_id}")
 def stop_enrichment(request_id: str):
@@ -213,9 +191,6 @@ def stop_enrichment(request_id: str):
     }
 
 
-# ============================================================
-# ENRICH LINKEDIN DATA
-# ============================================================
 
 @app.post("/api/enrich")
 def enrich(request: EnrichRequest):
@@ -230,15 +205,7 @@ def enrich(request: EnrichRequest):
         )
 
 
-    # ========================================================
-    # REQUEST ID
-    # ========================================================
 
-    # Use the request ID created by /api/enrich/start.
-    #
-    # Fallback:
-    # If somebody directly calls /api/enrich without a request
-    # ID, create one here so the API still works.
 
     request_id = (
         request.request_id
@@ -246,9 +213,7 @@ def enrich(request: EnrichRequest):
     )
 
 
-    # ========================================================
-    # GET / CREATE CANCELLATION EVENT
-    # ========================================================
+ 
 
     cancellation_event = get_cancellation_event(
         request_id
@@ -282,18 +247,14 @@ def enrich(request: EnrichRequest):
 
     try:
 
-        # ====================================================
-        # PROCESS EACH URL
-        # ====================================================
+     
 
         for index, original_url in enumerate(
             request.urls,
             1
         ):
 
-            # =================================================
-            # CHECK STOP
-            # =================================================
+         
 
             if cancellation_event.is_set():
 
@@ -340,18 +301,14 @@ def enrich(request: EnrichRequest):
             )
 
 
-            # ====================================================
-            # LINKEDIN IDENTITY
-            # ====================================================
+           
 
             identity = build_linkedin_identity(
                 url
             )
 
 
-            # ====================================================
-            # CHECK STOP
-            # ====================================================
+          
 
             if cancellation_event.is_set():
 
@@ -407,9 +364,7 @@ def enrich(request: EnrichRequest):
             ]
 
 
-            # ====================================================
-            # DETERMINE TYPE
-            # ====================================================
+           
 
             if entity_type == "person":
 
@@ -448,15 +403,11 @@ def enrich(request: EnrichRequest):
             )
 
 
-            # ====================================================
-            # MINDCASE
-            # ====================================================
+         
 
             try:
 
-                # ==============================================
-                # CHECK STOP
-                # ==============================================
+              
 
                 if cancellation_event.is_set():
 
@@ -481,9 +432,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # PERSON
-                # ==============================================
+             
 
                 if data_type == "person":
 
@@ -498,9 +447,7 @@ def enrich(request: EnrichRequest):
                     agent = "linkedin/profiles"
 
 
-                # ==============================================
-                # COMPANY
-                # ==============================================
+               
 
                 elif data_type == "company":
 
@@ -515,9 +462,7 @@ def enrich(request: EnrichRequest):
                     agent = "linkedin/companies"
 
 
-                # ==============================================
-                # CHECK STOP
-                # ==============================================
+              
 
                 if cancellation_event.is_set():
 
@@ -542,9 +487,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # CHECK JOB ID
-                # ==============================================
+               
 
                 if not job.get("job_id"):
 
@@ -561,9 +504,7 @@ def enrich(request: EnrichRequest):
                 )
 
 
-                # ==============================================
-                # POLL MINDCASE
-                # ==============================================
+               
 
                 print(
                     "→ Waiting for Mindcase result..."
@@ -580,9 +521,7 @@ def enrich(request: EnrichRequest):
                 )
 
 
-                # ==============================================
-                # CHECK CANCELLATION
-                # ==============================================
+              
 
                 if (
 
@@ -617,9 +556,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # CHECK RESULT
-                # ==============================================
+               
 
                 mindcase_data = (
                     mindcase_result.get(
@@ -670,9 +607,7 @@ def enrich(request: EnrichRequest):
                 )
 
 
-                # ==============================================
-                # CHECK STOP BEFORE SARVAM
-                # ==============================================
+                
 
                 if cancellation_event.is_set():
 
@@ -697,10 +632,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # SARVAM
-                # ==============================================
-
+            
                 print(
                     "→ Sending Mindcase data to Sarvam"
                 )
@@ -715,9 +647,7 @@ def enrich(request: EnrichRequest):
                 )
 
 
-                # ==============================================
-                # CHECK STOP AFTER SARVAM
-                # ==============================================
+               
 
                 if cancellation_event.is_set():
 
@@ -742,9 +672,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # SARVAM FAILED
-                # ==============================================
+                
 
                 if structured is None:
 
@@ -774,19 +702,14 @@ def enrich(request: EnrichRequest):
                     continue
 
 
-                # ==============================================
-                # CLEAN DATA
-                # ==============================================
+             
 
                 cleaned_data = clean_recursive(
                     structured
                 )
 
 
-                # ==============================================
-                # CHECK STOP AFTER CLEANING
-                # ==============================================
-
+           
                 if cancellation_event.is_set():
 
                     print(
@@ -810,9 +733,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # ==============================================
-                # FINAL MAIN DATA
-                # ==============================================
+               
 
                 final_data = {
 
@@ -832,9 +753,7 @@ def enrich(request: EnrichRequest):
                 }
 
 
-                # ==============================================
-                # SAVE MAIN RESULT TO NEON
-                # ==============================================
+              
 
                 try:
 
@@ -911,9 +830,7 @@ def enrich(request: EnrichRequest):
                     }
 
 
-                # =================================================
-                # COMPANY → EMPLOYEES
-                # =================================================
+             
 
                 employee_data = None
 
@@ -922,9 +839,7 @@ def enrich(request: EnrichRequest):
 
                 if data_type == "company":
 
-                    # =============================================
-                    # CHECK STOP
-                    # =============================================
+                  
 
                     if cancellation_event.is_set():
 
@@ -961,9 +876,7 @@ def enrich(request: EnrichRequest):
                     )
 
 
-                    # =============================================
-                    # CHECK STOP
-                    # =============================================
+                  
 
                     if cancellation_event.is_set():
 
@@ -1012,9 +925,7 @@ def enrich(request: EnrichRequest):
                         )
 
 
-                        # =========================================
-                        # CHECK CANCELLATION
-                        # =========================================
+                     
 
                         if (
 
@@ -1072,9 +983,7 @@ def enrich(request: EnrichRequest):
                             )
 
 
-                            # =====================================
-                            # CHECK STOP BEFORE EMPLOYEE SARVAM
-                            # =====================================
+                         
 
                             if cancellation_event.is_set():
 
@@ -1099,9 +1008,7 @@ def enrich(request: EnrichRequest):
                                 }
 
 
-                            # =====================================
-                            # SARVAM EMPLOYEE STRUCTURING
-                            # =====================================
+                         
 
                             print(
                                 "→ Sending employee data to Sarvam"
@@ -1119,9 +1026,7 @@ def enrich(request: EnrichRequest):
                             )
 
 
-                            # =====================================
-                            # CHECK STOP
-                            # =====================================
+                           
 
                             if cancellation_event.is_set():
 
@@ -1153,18 +1058,14 @@ def enrich(request: EnrichRequest):
                                 )
 
 
-                                # =================================
-                                # CLEAN EMPLOYEE DATA
-                                # =================================
+                            
 
                                 employee_data = clean_recursive(
                                     employee_data
                                 )
 
 
-                                # =================================
-                                # CHECK STOP
-                                # =================================
+                             
 
                                 if cancellation_event.is_set():
 
@@ -1189,9 +1090,7 @@ def enrich(request: EnrichRequest):
                                     }
 
 
-                                # =================================
-                                # SAVE EMPLOYEES TO NEON
-                                # =================================
+                              
 
                                 try:
 
@@ -1263,9 +1162,7 @@ def enrich(request: EnrichRequest):
                         )
 
 
-                # =================================================
-                # FINAL RESULT
-                # =================================================
+             
 
                 final_data = {
 
@@ -1287,9 +1184,7 @@ def enrich(request: EnrichRequest):
                 }
 
 
-                # =================================================
-                # SUCCESS
-                # =================================================
+             
 
                 print(
                     "✅ Processing completed"
@@ -1316,9 +1211,7 @@ def enrich(request: EnrichRequest):
                 })
 
 
-            # ====================================================
-            # ERROR HANDLING
-            # ====================================================
+          
 
             except Exception as e:
 
@@ -1371,9 +1264,7 @@ def enrich(request: EnrichRequest):
                 })
 
 
-        # ========================================================
-        # FINAL SUMMARY
-        # ========================================================
+       
 
         if cancellation_event.is_set():
 
@@ -1440,9 +1331,7 @@ def enrich(request: EnrichRequest):
         )
 
 
-        # ========================================================
-        # API RESPONSE
-        # ========================================================
+        
 
         return {
 
@@ -1463,9 +1352,7 @@ def enrich(request: EnrichRequest):
 
     finally:
 
-        # ========================================================
-        # CLEAN REQUEST FROM ACTIVE CANCELLATIONS
-        # ========================================================
+       
 
         remove_cancellation_event(
             request_id
