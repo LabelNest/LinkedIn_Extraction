@@ -6,16 +6,11 @@ import psycopg2
 from dotenv import load_dotenv
 
 
-# ============================================================
-# LOAD ENVIRONMENT
-# ============================================================
 
 load_dotenv()
 
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -24,9 +19,7 @@ TENANT_ID = os.getenv("TENANT_ID")
 CREATED_BY = "vs_mindcase_website_enrich"
 
 
-# ============================================================
-# VALIDATE CONFIGURATION
-# ============================================================
+
 
 if not DATABASE_URL:
     raise RuntimeError(
@@ -39,9 +32,7 @@ if not TENANT_ID:
     )
 
 
-# ============================================================
-# DATABASE CONNECTION
-# ============================================================
+
 
 def get_connection():
 
@@ -50,9 +41,6 @@ def get_connection():
     )
 
 
-# ============================================================
-# CACHE KEY
-# ============================================================
 
 def generate_cache_key(
     agent,
@@ -73,10 +61,6 @@ def generate_cache_key(
     return f"{agent}:{hash_value}"
 
 
-# ============================================================
-# BUILD DATABASE ROW
-# ============================================================
-
 def build_database_row(
     data_type,
     canonical_url,
@@ -84,9 +68,6 @@ def build_database_row(
     job_id
 ):
 
-    # ========================================================
-    # PERSON
-    # ========================================================
 
     if data_type == "person":
 
@@ -124,9 +105,6 @@ def build_database_row(
         }
 
 
-    # ========================================================
-    # COMPANY
-    # ========================================================
 
     if data_type == "company":
 
@@ -171,9 +149,7 @@ def build_database_row(
     )
 
 
-# ============================================================
-# BUILD EMPLOYEE DATABASE ROW
-# ============================================================
+
 
 def build_employee_database_row(
     company_url,
@@ -233,9 +209,7 @@ def build_employee_database_row(
     }
 
 
-# ============================================================
-# INSERT ONE ROW
-# ============================================================
+
 
 def insert_database_row(
     row,
@@ -284,9 +258,7 @@ def insert_database_row(
 
     try:
 
-        # ====================================================
-        # CHECK CANCELLATION BEFORE CONNECTING TO NEON
-        # ====================================================
+
 
         if is_cancelled and is_cancelled():
 
@@ -302,9 +274,7 @@ def insert_database_row(
         cursor = conn.cursor()
 
 
-        # ====================================================
-        # CHECK CANCELLATION BEFORE INSERT
-        # ====================================================
+    
 
         if is_cancelled and is_cancelled():
 
@@ -317,9 +287,7 @@ def insert_database_row(
             return None
 
 
-        # ====================================================
-        # INSERT
-        # ====================================================
+
 
         cursor.execute(
 
@@ -358,9 +326,7 @@ def insert_database_row(
         )
 
 
-        # ====================================================
-        # CHECK CANCELLATION AFTER INSERT
-        # ====================================================
+  
 
         if is_cancelled and is_cancelled():
 
@@ -415,9 +381,7 @@ def insert_database_row(
             conn.close()
 
 
-# ============================================================
-# SAVE PERSON / COMPANY
-# ============================================================
+
 
 def save_enrichment_to_database(
 
@@ -433,9 +397,7 @@ def save_enrichment_to_database(
 
 ):
 
-    # ========================================================
-    # CHECK CANCELLATION BEFORE BUILDING ROW
-    # ========================================================
+ 
 
     if is_cancelled and is_cancelled():
 
@@ -465,9 +427,7 @@ def save_enrichment_to_database(
     )
 
 
-# ============================================================
-# SAVE COMPANY EMPLOYEES
-# ============================================================
+
 
 def save_employees_to_database(
 
@@ -481,9 +441,7 @@ def save_employees_to_database(
 
 ):
 
-    # ========================================================
-    # CHECK CANCELLATION BEFORE BUILDING ROW
-    # ========================================================
+
 
     if is_cancelled and is_cancelled():
 
@@ -511,9 +469,7 @@ def save_employees_to_database(
     )
 
 
-# ============================================================
-# MAIN FUNCTION USED BY main.py
-# ============================================================
+
 
 def save_to_neon(
 
@@ -546,9 +502,7 @@ def save_to_neon(
     inserted_ids = []
 
 
-    # ========================================================
-    # CHECK CANCELLATION
-    # ========================================================
+
 
     if is_cancelled and is_cancelled():
 
@@ -559,9 +513,7 @@ def save_to_neon(
         return inserted_ids
 
 
-    # ========================================================
-    # PERSON / COMPANY
-    # ========================================================
+
 
     main_id = save_enrichment_to_database(
 
@@ -585,9 +537,7 @@ def save_to_neon(
         )
 
 
-    # ========================================================
-    # CHECK CANCELLATION BEFORE EMPLOYEES
-    # ========================================================
+
 
     if is_cancelled and is_cancelled():
 
@@ -598,9 +548,7 @@ def save_to_neon(
         return inserted_ids
 
 
-    # ========================================================
-    # COMPANY EMPLOYEES
-    # ========================================================
+
 
     if (
         data_type == "company"
@@ -631,9 +579,7 @@ def save_to_neon(
     return inserted_ids
 
 
-# ============================================================
-# TEST CONNECTION
-# ============================================================
+
 
 def test_database_connection():
 
